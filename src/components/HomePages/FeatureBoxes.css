@@ -1,0 +1,251 @@
+:root {
+  --maroon: #640d14;
+  --gold: #9b7645;
+  --soft-gold: rgba(155, 118, 69, 0.12);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+}
+
+/* ================= SECTION ================= */
+
+.blade-section {
+  padding: 80px 0;
+  /* background: radial-gradient(circle at top right, #fff5f5, #ffffff); */
+}
+
+.blade-wrapper {
+  max-width: 1300px;
+  margin: auto;
+  padding: 0 24px;
+}
+
+/* ================= CARD ================= */
+
+.blade-card {
+  position: relative;
+  background: linear-gradient(180deg, #ffffff, #fafafa);
+  border-radius: 16px;
+  padding: 34px 26px;
+  height: 100%;
+  border: 1px solid rgba(155, 118, 69, 0.18);
+  transition: all 0.45s ease;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.blade-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(155, 118, 69, 0.18), transparent 60%);
+  opacity: 0;
+  transition: 0.45s ease;
+}
+
+.blade-card:hover::after {
+  opacity: 1;
+}
+
+.blade-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--gold);
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(155, 118, 69, 0.25);
+}
+
+/* ================= NUMBER ================= */
+
+.blade-number {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 4.2rem;
+  font-weight: 800;
+  color: rgba(100, 13, 20, 0.04);
+  pointer-events: none;
+  transition: 0.4s ease;
+}
+
+.blade-card:hover .blade-number {
+  transform: scale(1.05);
+}
+
+/* ================= ICON ================= */
+
+.blade-icon-box {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blade-icon-box i {
+  font-size: 1.8rem;
+  color: var(--maroon);
+  z-index: 2;
+}
+
+.blade-icon-aura {
+  position: absolute;
+  inset: 0;
+  background: var(--soft-gold);
+  border-radius: 12px;
+  transform: rotate(45deg);
+  transition: 0.45s ease;
+}
+
+.blade-card:hover .blade-icon-aura {
+  background: var(--maroon);
+  transform: rotate(135deg);
+}
+
+.blade-card:hover .blade-icon-box i {
+  color: #fff;
+}
+
+/* ================= CONTENT ================= */
+
+.blade-tag {
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.blade-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.blade-line {
+  display: block;
+  width: 26px;
+  height: 2px;
+  margin-top: 14px;
+  background: var(--gold);
+  transition: 0.4s ease;
+}
+
+.blade-card:hover .blade-line {
+  width: 100%;
+  background: var(--maroon);
+}
+
+/* ================= ACTION ================= */
+
+.blade-action {
+  margin-top: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: 0.4s ease;
+  cursor: pointer;
+}
+
+.blade-card:hover .blade-action {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.blade-action i {
+  font-size: 0.75rem;
+  transition: transform 0.3s ease;
+}
+
+.blade-action:hover i {
+  transform: translateX(4px);
+}
+
+/* ================= SW*
+
+
+/* ================= MOBILE OPTIMIZATION ================= */
+
+@media (max-width: 768px) {
+
+  /* Section spacing */
+  .blade-section {
+    padding: 48px 0;
+  }
+
+  .blade-wrapper {
+    padding: 0 16px;
+  }
+
+  /* Card */
+  .blade-card {
+    padding: 22px 18px;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Reduce hover dependency for mobile */
+  .blade-card::after {
+    opacity: 1;
+  }
+
+  .blade-card:hover {
+    transform: none;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Number watermark */
+  .blade-number {
+    font-size: 3rem;
+    top: 6px;
+    right: 10px;
+  }
+
+  /* Icon */
+  .blade-icon-box {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 18px;
+  }
+
+  .blade-icon-box i {
+    font-size: 1.5rem;
+  }
+
+  /* Text */
+  .blade-tag {
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+  }
+
+  .blade-title {
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  /* Divider line */
+  .blade-line {
+    width: 22px;
+    margin-top: 10px;
+  }
+
+  /* Action button always visible on mobile */
+  .blade-action {
+    opacity: 1;
+    transform: none;
+    margin-top: 16px;
+    font-size: 0.75rem;
+  }
+
+  .blade-action i {
+    font-size: 0.7rem;
+  }
+}

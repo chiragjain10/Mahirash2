@@ -1,0 +1,133 @@
+:root {
+    --ex-gold: #9b7645;
+    --ex-maroon: #640d14;
+    --ex-bg: #eae6dd; /* Keeping your base background color */
+  }
+  
+  .exhibit-section {
+    /* padding: 80px 0; */
+    background-color: #fff; /* Clean white canvas for the cards to pop */
+  }
+  
+  /* --- Card Structure --- */
+  .exhibit-card {
+    display: block;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+  }
+  
+  /* --- Media Container --- */
+  .exhibit-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5; /* More elegant than a square for premium products */
+    background: var(--ex-bg);
+    overflow: hidden;
+    border-radius: 4px; /* Minimal radius for a modern boutique look */
+  }
+  
+  .exhibit-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Best for product transparency/perfume bottles */
+    padding: 20px;
+    transition: transform 0.8s ease;
+  }
+  
+  .exhibit-card:hover .exhibit-img {
+    transform: scale(1.1);
+  }
+  
+  /* --- Hover Discovery Layer --- */
+  .exhibit-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(100, 13, 20, 0.2); /* Soft Maroon tint */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    backdrop-filter: blur(4px);
+  }
+  
+  .exhibit-btn {
+    padding: 10px 20px;
+    background: #fff;
+    color: var(--ex-maroon);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+    transform: translateY(20px);
+    transition: transform 0.4s ease;
+  }
+  
+  .exhibit-card:hover .exhibit-overlay {
+    opacity: 1;
+  }
+  
+  .exhibit-card:hover .exhibit-btn {
+    transform: translateY(0);
+  }
+  
+  /* --- Badge & Info --- */
+  .exhibit-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #fff;
+    color: var(--ex-gold);
+    font-size: 0.6rem;
+    padding: 4px 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    border: 1px solid rgba(155, 118, 69, 0.2);
+  }
+  
+  .exhibit-info {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .exhibit-name {
+    font-size: 1.2rem;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 400;
+    margin: 0;
+  }
+  
+  .exhibit-line {
+    width: 20px;
+    height: 2px;
+    background: var(--ex-gold);
+    margin: 10px auto 0;
+    transition: width 0.4s ease, background 0.4s ease;
+  }
+  
+  .exhibit-card:hover .exhibit-line {
+    width: 50px;
+    background: var(--ex-maroon);
+  }
+  
+  /* --- Swiper Customization --- */
+  .exhibit-swiper {
+    padding-bottom: 50px !important;
+  }
+  
+  .swiper-pagination-bullet-active {
+    background: var(--ex-maroon) !important;
+  }
+  
+  @media (max-width: 768px) {
+    .exhibit-media {
+      aspect-ratio: 1 / 1; /* Back to square for mobile space efficiency */
+    }
+    .exhibit-name {
+      font-size: 1rem;
+    }
+  }

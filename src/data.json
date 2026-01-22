@@ -1,0 +1,135 @@
+[
+  {
+    "id": 1,
+    "name": "Oval Yellow Diamond Double Halo Engagement Ring",
+    "images": {
+      "default": "images/products/product-54.jpg",
+      "hover": "images/products/product-55.jpg"
+    },
+    "price": {
+      "new": "$2,499.00",
+      "old": null
+    },
+    "badge": "NEW IN",
+    "variant": {
+      "type": "sizes",
+      "text": "3 sizes are available"
+    },
+    "buttons": ["Add to Wishlist", "Quick Add", "Quick View", "Add to Compare"],
+    "links": {
+      "product": "product-default.html",
+      "wishlist": "#",
+      "quickAdd": "#quickAdd",
+      "quickView": "#quickView",
+      "compare": "#compare"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Small Earrings In Gold with Diamond",
+    "images": {
+      "default": "images/products/product-56.jpg",
+      "hover": "images/products/product-57.jpg"
+    },
+    "price": {
+      "new": "$3,370.00",
+      "old": "$3,899.00"
+    },
+    "badge": "30% OFF",
+    "variant": {
+      "type": "countdown",
+      "timer": 102738,
+      "labels": "d : ,h : ,m : , s"
+    },
+    "buttons": ["Add to Wishlist", "Add to Cart", "Quick View", "Add to Compare"],
+    "links": {
+      "product": "product-default.html",
+      "wishlist": "#",
+      "addToCart": "#shoppingCart",
+      "quickView": "#quickView",
+      "compare": "#compare"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Sixteen Stone Narrow Earrings",
+    "images": {
+      "default": "images/products/product-58.jpg",
+      "hover": "images/products/product-59.jpg"
+    },
+    "price": {
+      "new": "$2,499.00",
+      "old": "$2,899.00"
+    },
+    "badge": "30% OFF",
+    "variant": {
+      "type": "marquee",
+      "items": [
+        "30% OFF",
+        "Selling fast",
+        "30% OFF",
+        "Selling fast",
+        "30% OFF",
+        "Selling fast"
+      ]
+    },
+    "buttons": ["Add to Wishlist", "Add to Cart", "Quick View", "Add to Compare"],
+    "links": {
+      "product": "product-default.html",
+      "wishlist": "#",
+      "addToCart": "#shoppingCart",
+      "quickView": "#quickView",
+      "compare": "#compare"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Sparkling Moon & Star Stud Earrings",
+    "images": {
+      "default": "images/products/product-4.jpg",
+      "hover": "images/products/product-13.jpg"
+    },
+    "price": {
+      "new": "$2,499.00",
+      "old": null
+    },
+    "badge": null,
+    "status": "out-of-stock",
+    "variant": {
+      "type": "notify",
+      "textDesktop": "Notify Me When Available",
+      "textMobile": "Notify Me"
+    },
+    "buttons": ["Notify Me"],
+    "links": {
+      "product": "product-notify-avaiable.html",
+      "notify": "#unavailable"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Emerald-cut Halo Engagement Ring with a Diamond Platinum Band",
+    "images": {
+      "default": "images/products/product-39.jpg",
+      "hover": "images/products/product-40.jpg"
+    },
+    "price": {
+      "new": "$3,370.00",
+      "old": "$3,899.00"
+    },
+    "badge": "NEW IN",
+    "variant": {
+      "type": "sizes",
+      "text": "3 sizes are available"
+    },
+    "status": "in-stock",
+    "buttons": ["Add to Wishlist", "Quick Add", "Quick View", "Add to Compare"],
+    "links": {
+      "product": "product-default.html",
+      "wishlist": "#",
+      "quickAdd": "#quickAdd",
+      "quickView": "#quickView",
+      "compare": "#compare"
+    }
+  }
+]

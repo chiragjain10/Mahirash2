@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      // Matches your AdminAuthContext hard-coded admin email
+      return request.auth != null && request.auth.token.email == 'admin@perfume.com';
+    }
+
+    // Public config used by the homepage (videos etc)
+    match /siteConfig/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Keep existing behavior locked down unless you add rules for other collections.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+

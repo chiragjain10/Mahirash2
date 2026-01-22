@@ -1,0 +1,736 @@
+/* Banner Fresh Section Styles */
+.banner-fresh-section {
+  padding: 80px 0;
+  /* background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); */
+  position: relative;
+  overflow: hidden;
+}
+
+.banner-fresh-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  /* background: linear-gradient(90deg, transparent 0%, #640d14 50%, transparent 100%); */
+}
+
+/* Section Header */
+.section-header {
+  margin-bottom: 60px;
+}
+
+.section-title {
+  font-size: 3rem;
+  font-weight: 300;
+  color: #2c2c2c;
+  margin-bottom: 15px;
+  letter-spacing: -0.5px;
+}
+
+.accent-text {
+  color: #640d14;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  color: #6c757d;
+  font-weight: 300;
+  margin: 0;
+}
+
+/* Fresh Products Slider */
+.fresh-products-slider {
+  position: relative;
+  padding: 20px 0;
+}
+
+.fresh-products-slider.dragging {
+  cursor: grabbing;
+  cursor: -webkit-grabbing;
+}
+
+/* Fresh Product Card */
+.fresh-product-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(100, 13, 20, 0.1);
+}
+
+.fresh-product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(100, 13, 20, 0.15);
+  border-color: rgba(100, 13, 20, 0.3);
+}
+
+/* Card Wrapper */
+.card-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Product Image Container */
+.product-image-container {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #f8f9fa;
+}
+
+.product-image,
+.product-hover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.product-hover-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transform: scale(1.1);
+}
+
+.fresh-product-card:hover .product-image {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.fresh-product-card:hover .product-hover-image {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Product Badge */
+.product-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #640d14;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(100, 13, 20, 0.3);
+}
+
+/* Product Actions */
+.product-actions {
+  position: absolute;
+  top: 30% !important;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 3;
+}
+
+.fresh-product-card:hover .product-actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Mobile: Show action buttons by default */
+@media (max-width: 767px) {
+  .product-actions {
+    opacity: 1;
+    transform: translateX(0);
+    top: 12px;
+  }
+  
+  .fresh-product-card:hover .product-actions {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.action-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  color: #640d14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:hover {
+  background: #640d14;
+  color: #ffffff;
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(100, 13, 20, 0.4);
+}
+
+/* Mobile: Remove hover effects for action buttons */
+@media (max-width: 767px) {
+  .action-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: #640d14;
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.action-btn i {
+  font-size: 16px;
+}
+
+/* Cart Button Spinner */
+.cart-btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid #640d14;
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Disabled state for cart button */
+.action-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.action-btn:disabled:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: #640d14;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Out of Stock Overlay */
+.out-of-stock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  /* Do not intercept taps on mobile */
+  pointer-events: none;
+}
+
+/* Product Info - Redesigned */
+.product-info {
+  padding: 20px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border-top: 1px solid rgba(100, 13, 20, 0.08);
+}
+
+.product-info:hover {
+  transform: translateY(-2px);
+}
+
+/* Mobile: Remove hover effects for product info */
+@media (max-width: 767px) {
+  .product-info:hover {
+    transform: none;
+  }
+}
+
+/* Product Name - Redesigned */
+.product-name {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #000;
+  margin: 0 0 5px 0;
+  line-height: 1.5;
+  transition: all 0.3s ease;
+  letter-spacing: -0.2px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.product-brand {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #000;
+  margin: 0 0 5px 0;
+  line-height: 1.5;
+  transition: all 0.3s ease;
+  letter-spacing: -0.2px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.fresh-product-card:hover .product-name {
+  color: #000;
+}
+
+/* Mobile: Remove hover effects for product name */
+@media (max-width: 767px) {
+  .fresh-product-card:hover .product-name {
+    color: #1a1a1a;
+  }
+}
+
+/* Product Price - Redesigned */
+.product-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 0;
+  position: relative;
+}
+
+.current-price {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #000;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.3px;
+  transition: all 0.3s ease;
+}
+
+.fresh-product-card:hover .current-price {
+  transform: scale(1.02);
+}
+
+/* Mobile: Remove hover effects for current price */
+@media (max-width: 767px) {
+  .fresh-product-card:hover .current-price {
+    transform: none;
+  }
+}
+
+.old-price {
+  font-size: 0.875rem;
+  color: #8a8a8a;
+  text-decoration: line-through;
+  font-weight: 400;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.3s ease;
+}
+
+.fresh-product-card:hover .old-price {
+  opacity: 0.6;
+}
+
+/* Mobile: Remove hover effects for old price */
+@media (max-width: 767px) {
+  .fresh-product-card:hover .old-price {
+    opacity: 1;
+  }
+}
+
+/* Discount Percentage */
+.discount-percentage {
+  font-size: 0.75rem;
+  color: #640d14;
+  font-weight: 600;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.fresh-product-card:hover .discount-percentage {
+  transform: scale(1.05);
+}
+
+/* Mobile: Remove hover effects for discount percentage */
+@media (max-width: 767px) {
+  .fresh-product-card:hover .discount-percentage {
+    transform: none;
+  }
+}
+
+/* Discount Badge */
+.discount-badge {
+  background: linear-gradient(135deg, #640d14, #8b1a23);
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(100, 13, 20, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.product-sizes {
+  font-size: 0.875rem;
+  /* color: #6c757d; */
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left: 3px solid #640d14;
+  transition: all 0.3s ease;
+}
+
+.fresh-product-card:hover .product-sizes {
+  /* background: rgba(100, 13, 20, 0.1); */
+  color: #640d14;
+  transform: translateX(4px);
+}
+
+/* Mobile: Remove hover effects for product sizes */
+@media (max-width: 767px) {
+  .fresh-product-card:hover .product-sizes {
+    color: #6c757d;
+    transform: none;
+  }
+}
+
+/* Enhanced Card Effects */
+.fresh-product-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(100, 13, 20, 0.02) 0%, transparent 50%, rgba(100, 13, 20, 0.02) 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.fresh-product-card:hover::after {
+  opacity: 1;
+}
+
+/* Card Glow Effect */
+.fresh-product-card {
+  position: relative;
+}
+
+.fresh-product-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #640d14, #8b1a23, #640d14);
+  border-radius: 18px;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.fresh-product-card:hover::before {
+  opacity: 0.3;
+}
+
+/* Mobile: Remove card glow effect */
+@media (max-width: 767px) {
+  .fresh-product-card::before {
+    display: none;
+  }
+  
+  .fresh-product-card::after {
+    display: none;
+  }
+}
+
+/* Product Image Hover Effects */
+.fresh-product-card:hover .product-image {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.fresh-product-card:hover .product-hover-image {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Mobile: Remove image hover effects */
+@media (max-width: 767px) {
+  .fresh-product-card:hover .product-image {
+    opacity: 1;
+    transform: none;
+  }
+  
+  .fresh-product-card:hover .product-hover-image {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+/* Product Badge Hover Effects */
+.fresh-product-card:hover .product-badge {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(100, 13, 20, 0.4);
+}
+
+/* Mobile: Remove badge hover effects */
+@media (max-width: 767px) {
+  .fresh-product-card:hover .product-badge {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(100, 13, 20, 0.3);
+  }
+}
+
+/* Enhanced hover effects */
+.fresh-product-card:hover .product-image-container {
+  transform: scale(1.02);
+}
+
+/* Mobile: Remove image container hover effects */
+@media (max-width: 767px) {
+  .fresh-product-card:hover .product-image-container {
+    transform: none;
+  }
+}
+
+/* Price animation */
+@keyframes priceGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(100, 13, 20, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(100, 13, 20, 0.6);
+  }
+}
+
+/* .fresh-product-card:hover .current-price {
+  animation: priceGlow 2s infinite;
+} */
+
+/* Mobile: Remove price glow animation */
+@media (max-width: 767px) {
+  .fresh-product-card:hover .current-price {
+    animation: none;
+  }
+}
+
+/* Card hover transform */
+.fresh-product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(100, 13, 20, 0.15);
+  border-color: rgba(100, 13, 20, 0.3);
+}
+
+/* Mobile: Remove card hover transform */
+@media (max-width: 767px) {
+  .fresh-product-card:hover {
+    transform: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border-color: rgba(100, 13, 20, 0.1);
+  }
+}
+
+/* Loading Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fresh-product-card {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Smooth scrolling for the slider */
+.fresh-products-slider {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar for webkit browsers */
+.fresh-products-slider::-webkit-scrollbar {
+  height: 6px;
+}
+
+.fresh-products-slider::-webkit-scrollbar-track {
+  background: rgba(100, 13, 20, 0.1);
+  border-radius: 3px;
+}
+
+.fresh-products-slider::-webkit-scrollbar-thumb {
+  background: rgba(100, 13, 20, 0.3);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.fresh-products-slider::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 13, 20, 0.5);
+}
+
+/* Focus states for accessibility */
+.action-btn:focus {
+  outline: 2px solid #640d14;
+  outline-offset: 2px;
+}
+
+.product-image-container:focus {
+  outline: 2px solid #640d14;
+  outline-offset: 2px;
+}
+
+/* Animation delays for staggered card appearance */
+.fresh-product-card:nth-child(1) { animation-delay: 0.1s; }
+.fresh-product-card:nth-child(2) { animation-delay: 0.2s; }
+.fresh-product-card:nth-child(3) { animation-delay: 0.3s; }
+.fresh-product-card:nth-child(4) { animation-delay: 0.4s; }
+.fresh-product-card:nth-child(5) { animation-delay: 0.5s; }
+.fresh-product-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .section-title {
+    font-size: 2.5rem;
+  }
+  
+  .fresh-product-card {
+    min-width: 260px;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 991px) {
+  .banner-fresh-section {
+    padding: 60px 0;
+  }
+  
+  .section-title {
+    font-size: 2.25rem;
+  }
+  
+  .fresh-product-card {
+    min-width: 240px;
+    max-width: 280px;
+  }
+  
+  .product-image-container {
+    height: 240px;
+  }
+}
+
+@media (max-width: 767px) {
+  .banner-fresh-section {
+    padding: 40px 0;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .section-subtitle {
+    font-size: 1rem;
+  }
+  
+  .fresh-product-card {
+    min-width: 220px;
+    max-width: 260px;
+  }
+  
+  .product-image-container {
+    height: 200px;
+  }
+  
+  .product-info {
+    padding: 24px 20px 20px;
+  }
+  
+  .product-name {
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+  
+  .current-price {
+    font-size: 1.1rem;
+  }
+  
+  .old-price {
+    font-size: 0.8rem;
+  }
+  
+  .discount-percentage {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .fresh-product-card {
+    min-width: 200px;
+    max-width: 240px;
+  }
+  
+  .product-image-container {
+    height: 180px;
+  }
+  
+  .product-info {
+    padding: 20px 16px 16px;
+  }
+  
+  .action-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .action-btn i {
+    font-size: 14px;
+  }
+  
+  .product-name {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+  
+  .current-price {
+    font-size: 1rem;
+  }
+  
+  .old-price {
+    font-size: 0.8rem;
+  }
+}
