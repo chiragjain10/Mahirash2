@@ -59,35 +59,92 @@ function Checkout() {
 
   // Adjust product inventory per-size using a transaction
   const adjustInventoryForOrder = async (items) => {
+    console.log('Starting inventory adjustment for order items:', items.length);
+    
     for (const item of items) {
       const productId = item.id;
       const sizeKey = item.selectedSize && item.selectedSize.size ? item.selectedSize.size : '';
       const qty = Number(item.quantity || 1);
-      if (!productId || !sizeKey || qty <= 0) continue;
+      
+      if (!productId || !sizeKey || qty <= 0) {
+        console.warn('Skipping item - missing productId, sizeKey, or invalid quantity:', { productId, sizeKey, qty });
+        continue;
+      }
 
       const productRef = doc(db, 'products', productId);
-      await runTransaction(db, async (transaction) => {
-        const snap = await transaction.get(productRef);
-        if (!snap.exists()) return;
-        const data = snap.data();
-        const sizes = Array.isArray(data.sizes) ? [...data.sizes] : [];
-        const idx = sizes.findIndex(s => (s?.size || '') === sizeKey);
-        if (idx === -1) return;
-        const currentStock = Number(sizes[idx]?.stock || 0);
-        const newStock = Math.max(0, currentStock - qty);
-        sizes[idx] = {
-          ...sizes[idx],
-          stock: newStock,
-          isOutOfStock: !!sizes[idx].isOutOfStock || newStock <= 0,
-        };
-        const productOut = (sizes.length > 0 && sizes.every(sz => (!!sz.isOutOfStock || Number(sz.stock || 0) <= 0)));
-        transaction.update(productRef, { sizes, isOutOfStock: productOut });
-      });
+      
+      try {
+        await runTransaction(db, async (transaction) => {
+          const snap = await transaction.get(productRef);
+          if (!snap.exists()) {
+            console.warn('Product not found:', productId);
+            return;
+          }
+          
+          const data = snap.data();
+          const sizes = Array.isArray(data.sizes) ? [...data.sizes] : [];
+          const idx = sizes.findIndex(s => (s?.size || '') === sizeKey);
+          
+          if (idx === -1) {
+            console.warn('Size not found in product:', { productId, sizeKey });
+            return;
+          }
+          
+          const currentStock = Number(sizes[idx]?.stock || 0);
+          const newStock = Math.max(0, currentStock - qty);
+          
+          // Automatically set isOutOfStock based on stock (0 or less = out of stock)
+          const isOutOfStock = newStock <= 0;
+          
+          console.log(`Updating stock for ${item.name} - Size: ${sizeKey}`, {
+            currentStock,
+            quantity: qty,
+            newStock,
+            isOutOfStock
+          });
+          
+          // Update the specific size
+          sizes[idx] = {
+            ...sizes[idx],
+            stock: newStock,
+            isOutOfStock: isOutOfStock,
+          };
+          
+          // Automatically calculate product-level isOutOfStock
+          // Product is out of stock if all sizes are out of stock (stock <= 0)
+          const productIsOutOfStock = sizes.length > 0 && sizes.every(sz => {
+            const szStock = Number(sz.stock || 0);
+            return szStock <= 0 || (sz.isOutOfStock === true);
+          });
+          
+          console.log(`Product-level isOutOfStock: ${productIsOutOfStock}`, {
+            totalSizes: sizes.length,
+            allSizesOut: sizes.every(sz => Number(sz.stock || 0) <= 0)
+          });
+          
+          transaction.update(productRef, { 
+            sizes, 
+            isOutOfStock: productIsOutOfStock 
+          });
+        });
+        
+        console.log(`Successfully updated stock for product: ${productId}, size: ${sizeKey}`);
+      } catch (error) {
+        console.error(`Error updating inventory for product ${productId}, size ${sizeKey}:`, error);
+        // Don't throw - continue with other items
+      }
     }
+    
+    console.log('Inventory adjustment completed');
   };
 
   // Save order to Firebase
   const saveOrderToFirebase = async (paymentId = 'pending', status = 'pending') => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User must be logged in to place an order');
+    }
+
     const orderData = {
       customerInfo: formData,
       items: cartItems,
@@ -99,10 +156,12 @@ function Checkout() {
       paymentId,
       status,
       createdAt: serverTimestamp(),
-      userId: auth.currentUser ? auth.currentUser.uid : null,
+      userId: currentUser.uid,
     };
 
+    console.log('Saving order to Firebase:', { orderId: 'pending', userId: currentUser.uid, status });
     const docRef = await addDoc(collection(db, 'orders'), orderData);
+    console.log('Order saved successfully:', docRef.id);
     return docRef.id;
   };
 
@@ -192,11 +251,15 @@ function Checkout() {
               });
             } catch (_) {}
 
-            // Decrement stock per size
+            // Decrement stock per size after successful payment
+            // This automatically updates stock and sets isOutOfStock based on new stock values
             try {
+              console.log('Decrementing stock for purchased items...');
               await adjustInventoryForOrder(cartItems);
+              console.log('Stock successfully decremented for all items');
             } catch (err) {
-              console.warn('Payment captured, but failed to update stock immediately. Will require manual reconciliation.', err);
+              console.error('Payment captured, but failed to update stock immediately. Will require manual reconciliation.', err);
+              // Note: In production, you might want to queue this for retry
             }
 
             // Simulate sending confirmation email

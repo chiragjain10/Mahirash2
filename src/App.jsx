@@ -44,6 +44,7 @@ import Shipping from './pages/Shipping';
 import Refund from './components/Refund';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Terms from './pages/Terms';
+import Account from './pages/Account';
 
 function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -206,6 +207,16 @@ function App() {
                       <>
                         <Header />
                         <Orders />
+                        <Footer />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="/account"
+                    element={
+                      <>
+                        <Header />
+                        <Account />
                         <Footer />
                       </>
                     }

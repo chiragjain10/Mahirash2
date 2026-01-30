@@ -26,7 +26,7 @@ function BannerImg() {
               <span>Wear Mahirash</span>
             </p>
 
-            <p className="sub-title py-10">
+            <p className="sub-title py-5">
               Discover the art of fragrance with Mahirash. From bold signatures
               to subtle elegance, find the scent that defines you.
             </p>

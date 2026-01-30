@@ -112,10 +112,39 @@ function ProductDetails() {
       const fallbackIdx = sizesArr.findIndex(s => (s && s.size) === '50ml');
       return defaultIdx >= 0 ? defaultIdx : (fallbackIdx >= 0 ? fallbackIdx : 0);
     } else {
+      // Check if a preferred size was passed from navigation
+      if (location.state?.preferredSize) {
+        const preferredIdx = sizesArr.findIndex(s => (s && s.size) === location.state.preferredSize);
+        if (preferredIdx >= 0) return preferredIdx;
+      }
+      
+      // Try 50ml first
       const defaultIdx = sizesArr.findIndex(s => (s && s.size) === '50ml');
-      return defaultIdx >= 0 ? defaultIdx : 0;
+      if (defaultIdx >= 0) return defaultIdx;
+      
+      // If no 50ml, find the highest available size
+      const getNumericSizeValue = (sizeLabel) => {
+        if (!sizeLabel) return null;
+        const match = sizeLabel.toString().match(/(\d+(?:\.\d+)?)/);
+        return match ? parseFloat(match[1]) : null;
+      };
+      
+      // Find highest size
+      let highestIdx = 0;
+      let highestValue = -1;
+      sizesArr.forEach((sz, idx) => {
+        if (sz && sz.size) {
+          const value = getNumericSizeValue(sz.size);
+          if (value !== null && value > highestValue) {
+            highestValue = value;
+            highestIdx = idx;
+          }
+        }
+      });
+      
+      return highestIdx;
     }
-  }, [sizesArr, location.state?.fromBannerFresh]);
+  }, [sizesArr, location.state?.fromBannerFresh, location.state?.preferredSize]);
   
   const preferredSizeIndex = useMemo(() => {
     const preferredIdx = finalDefaultIdx ?? 0;

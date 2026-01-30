@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import './Header.css';
 import React, { useState, useEffect } from 'react';
-import AccountsPopup from '../AccountsPopup';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 
@@ -9,7 +8,6 @@ export default function Middle() {
   const navigate = useNavigate();
   const { getCartCount } = useCart();
   const { getWishlistCount } = useWishlist();
-  const [showAccountPopup, setShowAccountPopup] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -32,11 +30,7 @@ export default function Middle() {
 
   const handleAccountClick = (e) => {
     e.preventDefault();
-    setShowAccountPopup(true);
-  };
-
-  const handleCloseAccountPopup = () => {
-    setShowAccountPopup(false);
+    navigate('/account');
   };
 
   const handleSearchClick = () => {
@@ -171,10 +165,6 @@ export default function Middle() {
             </form>
           </div>
         </div>
-      )}
-      
-      {showAccountPopup && (
-        <AccountsPopup onClose={handleCloseAccountPopup} />
       )}
     </div>
   );
