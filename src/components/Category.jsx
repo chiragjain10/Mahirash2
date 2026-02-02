@@ -20,7 +20,7 @@ const SIZE_RANGES = [
   { id: '10-20', label: '10-20ml', min: 10, max: 20 },
   { id: '20-50', label: '20-50ml', min: 20, max: 50 },
   { id: '50-100', label: '50-100ml', min: 50, max: 100 },
-  { id: '100+', label: '100ml+', min: 100, max: Infinity }
+  { id: '100+', label: '>100ml', min: 101, max: Infinity }
 ];
 
 const Category = () => {
@@ -101,6 +101,22 @@ const Category = () => {
     }
   }, [searchParams]);
 
+  // Read size filter from query string
+  useEffect(() => {
+    const sizeParam = (searchParams.get('size') || '').trim();
+    if (sizeParam) {
+      // Check if the size parameter matches any of the SIZE_RANGES IDs
+      const validSizeId = SIZE_RANGES.find(range => range.id === sizeParam);
+      if (validSizeId) {
+        setSizeFilter(sizeParam);
+      } else {
+        setSizeFilter('all');
+      }
+    } else {
+      setSizeFilter('all');
+    }
+  }, [searchParams]);
+
   // Apply brand pre-filter from query param if present
   useEffect(() => {
     const urlBrand = (searchParams.get('brand') || '').trim();
@@ -142,6 +158,14 @@ const Category = () => {
   const handleSizeChange = (sizeId) => {
     setSizeFilter(sizeId);
     setCurrentPage(1);
+    // Update URL with size parameter
+    if (sizeId === 'all') {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('size');
+      setSearchParams(newParams);
+    } else {
+      setSearchParams({ ...Object.fromEntries(searchParams), size: sizeId });
+    }
   };
 
   const handleSearchChange = async (e) => {

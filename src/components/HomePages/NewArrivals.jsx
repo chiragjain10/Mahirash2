@@ -151,8 +151,8 @@ function NewArrivals({ onQuickView }) {
     
     await new Promise(res => setTimeout(res, 600));
     
-    // Get the size that's being displayed (50ml preferred, then lowest)
-    const displaySize = get50mlSize(product) || getLowestSize(product);
+    // Get the size that's being displayed (50ml preferred, then highest)
+    const displaySize = get50mlSize(product) || getHighestSize(product);
     const productWithSize = {
       ...product,
       selectedSize: displaySize || { size: '', price: product.price, oldPrice: product.oldPrice }
@@ -169,7 +169,13 @@ function NewArrivals({ onQuickView }) {
   };
 
   const handleCardClick = (product) => {
-    navigate(`/product/${product.id}`);
+    // Get the displayed size (50ml preferred, then highest)
+    const displaySize = get50mlSize(product) || getHighestSize(product);
+    navigate(`/product/${product.id}`, {
+      state: {
+        preferredSize: displaySize?.size || null
+      }
+    });
   };
 
   const handleQuickView = (product) => {
@@ -182,19 +188,19 @@ function NewArrivals({ onQuickView }) {
     return product.sizes.find(sz => (typeof sz === 'object' && sz.size === '50ml')) || null;
   }
   
-  function getLowestSize(product) {
+  function getHighestSize(product) {
     if (!Array.isArray(product.sizes) || product.sizes.length === 0) return null;
     
     // Filter sizes that have both size and price
     const validSizes = product.sizes.filter(sz => sz.size && sz.price);
     if (validSizes.length === 0) return null;
     
-    // Sort by size value (extract numeric part) and return the lowest
+    // Sort by size value (extract numeric part) and return the highest
     const sortedSizes = validSizes.sort((a, b) => {
       const aMatch = a.size.toString().match(/(\d+(?:\.\d+)?)/);
       const bMatch = b.size.toString().match(/(\d+(?:\.\d+)?)/);
       if (!aMatch || !bMatch) return 0;
-      return parseFloat(aMatch[1]) - parseFloat(bMatch[1]);
+      return parseFloat(bMatch[1]) - parseFloat(aMatch[1]);
     });
     
     return sortedSizes[0];
@@ -205,9 +211,9 @@ function NewArrivals({ onQuickView }) {
     const s50 = get50mlSize(product);
     if (s50 && Array.isArray(s50.images) && s50.images[0]) return s50.images[0];
     
-    // If no 50ml, try lowest size
-    const lowestSize = getLowestSize(product);
-    if (lowestSize && Array.isArray(lowestSize.images) && lowestSize.images[0]) return lowestSize.images[0];
+    // If no 50ml, try highest size
+    const highestSize = getHighestSize(product);
+    if (highestSize && Array.isArray(highestSize.images) && highestSize.images[0]) return highestSize.images[0];
     
     // Fallback to first available image from any size
     if (product.sizes && Array.isArray(product.sizes)) {
@@ -233,13 +239,13 @@ function NewArrivals({ onQuickView }) {
       };
     }
     
-    // If no 50ml, get lowest size
-    const lowestSize = getLowestSize(product);
-    if (lowestSize) {
+    // If no 50ml, get highest size
+    const highestSize = getHighestSize(product);
+    if (highestSize) {
       return {
-        price: lowestSize.price,
-        oldPrice: lowestSize.oldPrice,
-        size: lowestSize.size,
+        price: highestSize.price,
+        oldPrice: highestSize.oldPrice,
+        size: highestSize.size,
         is50ml: false
       };
     }
@@ -250,6 +256,29 @@ function NewArrivals({ onQuickView }) {
     const num = typeof price === 'string' ? parseFloat(price) : price;
     return isNaN(num) ? '0.00' : num.toFixed(2);
   }
+
+  // Helper function to get category icon and color
+  const getCategoryInfo = (badge) => {
+    if (!badge) return { icon: 'fa-tag', color: '#fff', bg: 'linear-gradient(135deg, #640d14, #9b7645)' };
+    
+    const badgeLower = badge.toLowerCase();
+    switch (badgeLower) {
+      case 'new':
+        return { icon: 'fa-star', color: '#fff', bg: 'linear-gradient(135deg, #3FC53A, #4CAF50)' };
+      case 'premium':
+        return { icon: 'fa-crown', color: '#fff', bg: 'linear-gradient(135deg, #C9B37E, #D4B04C)' };
+      case 'budget':
+        return { icon: 'fa-tags', color: '#fff', bg: 'linear-gradient(135deg, #2196F3, #1976D2)' };
+      case 'clearence':
+        return { icon: 'fa-fire', color: '#fff', bg: 'linear-gradient(135deg, #FF6B35, #F7931E)' };
+      case 'special edition':
+        return { icon: 'fa-gem', color: '#fff', bg: 'linear-gradient(135deg, #A63A27, #D32F2F)' };
+      case 'sale':
+        return { icon: 'fa-percent', color: '#fff', bg: 'linear-gradient(135deg, #E91E63, #C2185B)' };
+      default:
+        return { icon: 'fa-tag', color: '#fff', bg: 'linear-gradient(135deg, #640d14, #9b7645)' };
+    }
+  };
 
   if (loading) {
     return <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 200 }}><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>;
@@ -357,11 +386,31 @@ function NewArrivals({ onQuickView }) {
                     >
                       <img src={getProductPrimaryImage(product)} alt={product.name} className="product-image" />
                       <img src={getProductPrimaryImage(product)} alt={product.name} className="product-hover-image" />
-                      {product.badge && (
-                        <div className="product-badge">
-                          {product.badge}
-                        </div>
-                      )}
+                      {product.badge && (() => {
+                        const categoryInfo = getCategoryInfo(product.badge);
+                        return (
+                          <div 
+                            className="product-badge"
+                            style={{
+                              background: categoryInfo.bg,
+                              color: categoryInfo.color,
+                              fontWeight: 700,
+                              fontSize: '0.75rem',
+                              padding: '6px 14px',
+                              borderRadius: '20px',
+                              boxShadow: '0 4px 15px rgba(127, 89, 40, 0.3)',
+                              letterSpacing: '0.5px',
+                              textTransform: 'uppercase',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <i className={`fas ${categoryInfo.icon}`} style={{ fontSize: '0.7rem' }}></i>
+                            <span>{product.badge}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {!product.isOutOfStock && (

@@ -1,6 +1,6 @@
 // src/components/AdminDashboard.jsx
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, deleteDoc, doc, updateDoc, getDoc, setDoc, deleteField } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -22,13 +22,10 @@ const AdminDashboard = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [heroVideoUrl, setHeroVideoUrl] = useState('');
-  const [stageVideoUrl, setStageVideoUrl] = useState('');
-  const [isVideoUpdating, setIsVideoUpdating] = useState(false);
-  const [videoSaveWarning, setVideoSaveWarning] = useState('');
-  const [fullBannerUrl, setFullBannerUrl] = useState('');
-  const [isBannerUpdating, setIsBannerUpdating] = useState(false);
-  const [bannerSaveWarning, setBannerSaveWarning] = useState('');
+  const [showCsvModal, setShowCsvModal] = useState(false);
+  const [csvFile, setCsvFile] = useState(null);
+  const [isCsvUploading, setIsCsvUploading] = useState(false);
+  const [csvUploadProgress, setCsvUploadProgress] = useState({ current: 0, total: 0, errors: [] });
   const { adminUser, adminLogout } = useAdminAuth();
   const navigate = useNavigate();
 
@@ -205,37 +202,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Fetch homepage videos configuration
-  const fetchVideoConfig = async () => {
-    try {
-      const ref = doc(db, 'siteConfig', 'videos');
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
-        setHeroVideoUrl(data.heroVideoUrl || '');
-        setStageVideoUrl(data.stageVideoUrl || '');
-      }
-    } catch (error) {
-      console.error('Error fetching video config:', error);
-    }
-  };
-
-  // Fetch homepage banners configuration
-  const fetchBannerConfig = async () => {
-    try {
-      const ref = doc(db, 'siteConfig', 'banners');
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
-        setFullBannerUrl(data.fullBannerUrl || '');
-      } else {
-        setFullBannerUrl('');
-      }
-    } catch (error) {
-      console.error('Error fetching banner config:', error);
-    }
-  };
-
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
     try {
@@ -255,6 +221,17 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error deleting review:', error);
       alert('Failed to delete review. Please try again.');
+    }
+  };
+
+  const handleDeleteOrder = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this order? This action cannot be undone.')) return;
+    try {
+      await deleteDoc(doc(db, 'orders', id));
+      setOrders(prev => prev.filter(o => o.id !== id));
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      alert('Failed to delete order. Please try again.');
     }
   };
 
@@ -306,10 +283,13 @@ const AdminDashboard = () => {
       if (!sizes[idx]) return prev;
       if (field === 'size' && value !== 'custom') {
         sizes[idx] = { ...sizes[idx], size: value, customSize: '' };
-      } else if (field === 'isOutOfStock') {
-        sizes[idx] = { ...sizes[idx], isOutOfStock: Boolean(value) };
       } else {
         sizes[idx] = { ...sizes[idx], [field]: value };
+        // Automatically update isOutOfStock based on stock value
+        if (field === 'stock') {
+          const stockValue = Number(value || 0);
+          sizes[idx] = { ...sizes[idx], isOutOfStock: stockValue <= 0 };
+        }
       }
       return { ...prev, sizes };
     });
@@ -349,151 +329,6 @@ const AdminDashboard = () => {
     return res.data.secure_url;
   };
 
-  // Upload video to Cloudinary
-  const uploadVideoToCloudinary = async (file) => {
-    const data = new FormData();
-    data.append('file', file);
-    data.append('upload_preset', 'Mahirash');
-    const res = await axios.post('https://api.cloudinary.com/v1_1/djmfxpemz/video/upload', data);
-    return res.data.secure_url;
-  };
-
-  // Handle homepage full banner upload
-  const handleBannerUpload = async (event) => {
-    const file = event.target.files && event.target.files[0];
-    if (!file) return;
-
-    try {
-      setIsBannerUpdating(true);
-      setBannerSaveWarning('');
-
-      const secureUrl = await uploadToCloudinary(file);
-
-      // Update UI immediately
-      setFullBannerUrl(secureUrl);
-      try { localStorage.setItem('siteConfig.fullBannerUrl', secureUrl); } catch (_) {}
-
-      // Persist in Firestore
-      const ref = doc(db, 'siteConfig', 'banners');
-      await setDoc(ref, { fullBannerUrl: secureUrl }, { merge: true });
-
-      alert('Banner updated and saved successfully.');
-    } catch (error) {
-      console.error('Error uploading banner:', error);
-      setBannerSaveWarning(
-        'Uploaded to Cloudinary, but could not save to Firestore (Missing/insufficient permissions). Fix Firestore rules so it stays after refresh.'
-      );
-      alert('Upload finished, but saving to database failed. Please fix Firestore permissions.');
-    } finally {
-      setIsBannerUpdating(false);
-      if (event.target) {
-        event.target.value = '';
-      }
-    }
-  };
-
-  const handleRemoveBanner = async () => {
-    try {
-      setIsBannerUpdating(true);
-      setBannerSaveWarning('');
-
-      // Update UI immediately
-      setFullBannerUrl('');
-      try { localStorage.removeItem('siteConfig.fullBannerUrl'); } catch (_) {}
-
-      // Remove from Firestore so it stays removed after refresh
-      const ref = doc(db, 'siteConfig', 'banners');
-      await setDoc(ref, { fullBannerUrl: deleteField() }, { merge: true });
-
-      alert('Banner removed successfully.');
-    } catch (error) {
-      console.error('Error removing banner:', error);
-      setBannerSaveWarning(
-        'Removed locally, but could not update Firestore (Missing/insufficient permissions). Fix Firestore rules so it stays removed after refresh.'
-      );
-      alert('Remove failed to save to database. Please fix Firestore permissions.');
-    } finally {
-      setIsBannerUpdating(false);
-    }
-  };
-
-  // Handle homepage videos upload (hero + cinematic)
-  const handleVideoUpload = async (event, type) => {
-    const file = event.target.files && event.target.files[0];
-    if (!file) return;
-
-    try {
-      setIsVideoUpdating(true);
-      setVideoSaveWarning('');
-      const secureUrl = await uploadVideoToCloudinary(file);
-
-      const ref = doc(db, 'siteConfig', 'videos');
-      const payload =
-        type === 'hero'
-          ? { heroVideoUrl: secureUrl }
-          : { stageVideoUrl: secureUrl };
-
-      // Update UI immediately (so you can see the result even before persistence completes)
-      if (type === 'hero') {
-        setHeroVideoUrl(secureUrl);
-        try { localStorage.setItem('siteConfig.heroVideoUrl', secureUrl); } catch (_) {}
-      } else {
-        setStageVideoUrl(secureUrl);
-        try { localStorage.setItem('siteConfig.stageVideoUrl', secureUrl); } catch (_) {}
-      }
-
-      // Persist in Firestore (required for it to "stay" after refresh)
-      await setDoc(ref, payload, { merge: true });
-
-      alert('Video updated and saved successfully.');
-    } catch (error) {
-      console.error('Error uploading video:', error);
-      // If Cloudinary succeeded but Firestore failed, the URL will show in UI,
-      // but it will NOT persist after refresh until rules are fixed.
-      setVideoSaveWarning(
-        'Uploaded to Cloudinary, but could not save to Firestore (Missing/insufficient permissions). Fix Firestore rules so it stays after refresh.'
-      );
-      alert('Upload finished, but saving to database failed. Please fix Firestore permissions.');
-    } finally {
-      setIsVideoUpdating(false);
-      // reset input so same file can be chosen again if needed
-      if (event.target) {
-        event.target.value = '';
-      }
-    }
-  };
-
-  const handleRemoveVideo = async (type) => {
-    try {
-      setIsVideoUpdating(true);
-      setVideoSaveWarning('');
-
-      // Update UI immediately
-      if (type === 'hero') {
-        setHeroVideoUrl('');
-        try { localStorage.removeItem('siteConfig.heroVideoUrl'); } catch (_) {}
-      }
-      if (type === 'stage') {
-        setStageVideoUrl('');
-        try { localStorage.removeItem('siteConfig.stageVideoUrl'); } catch (_) {}
-      }
-
-      // Remove from Firestore so it stays removed after refresh
-      const ref = doc(db, 'siteConfig', 'videos');
-      const payload = type === 'hero' ? { heroVideoUrl: deleteField() } : { stageVideoUrl: deleteField() };
-      await setDoc(ref, payload, { merge: true });
-      alert('Video removed successfully.');
-    } catch (error) {
-      console.error('Error removing video:', error);
-      setVideoSaveWarning(
-        'Removed locally, but could not update Firestore (Missing/insufficient permissions). Fix Firestore rules so it stays removed after refresh.'
-      );
-      alert('Remove failed to save to database. Please fix Firestore permissions.');
-    } finally {
-      setIsVideoUpdating(false);
-    }
-  };
-
   const handleUpdate = async () => {
     try {
       setIsUpdating(true);
@@ -528,15 +363,21 @@ const AdminDashboard = () => {
           }
         }
         const numericStock = Number(s.stock || 0);
-        preparedSizes.push({ size: finalSize, price: s.price, oldPrice: s.oldPrice || '', stock: isNaN(numericStock) ? 0 : numericStock, images: uploadedUrls, isOutOfStock: !!s.isOutOfStock || (numericStock <= 0) });
+        // Automatically set isOutOfStock based on stock (0 or less = out of stock)
+        const isOutOfStock = numericStock <= 0;
+        preparedSizes.push({ size: finalSize, price: s.price, oldPrice: s.oldPrice || '', stock: isNaN(numericStock) ? 0 : numericStock, images: uploadedUrls, isOutOfStock });
       }
+
+      // Automatically calculate product-level isOutOfStock based on all sizes
+      // Product is out of stock if all sizes are out of stock (stock <= 0)
+      const productIsOutOfStock = preparedSizes.length > 0 && preparedSizes.every(sz => sz.isOutOfStock || (Number(sz.stock || 0) <= 0));
 
       const payload = {
         name: formData.name || '',
         brand: formData.brand || '',
         data: formData.data || '',
         badge: formData.badge || '',
-        isOutOfStock: !!formData.isOutOfStock || (preparedSizes.length > 0 && preparedSizes.every(sz => (sz.isOutOfStock || (Number(sz.stock || 0) <= 0)))),
+        isOutOfStock: productIsOutOfStock,
         tags: Array.isArray(formData.tags) ? formData.tags : [],
         gender: finalGender,
         note: formData.note || '',
@@ -560,12 +401,296 @@ const AdminDashboard = () => {
     navigate('/admin');
   };
 
+  // CSV Parser function
+  const parseCSV = (text) => {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length < 2) throw new Error('CSV file must have at least a header row and one data row');
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+    const rows = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = [];
+      let currentValue = '';
+      let insideQuotes = false;
+      
+      for (let j = 0; j < lines[i].length; j++) {
+        const char = lines[i][j];
+        if (char === '"') {
+          insideQuotes = !insideQuotes;
+        } else if (char === ',' && !insideQuotes) {
+          values.push(currentValue.trim());
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      }
+      values.push(currentValue.trim());
+      
+      if (values.length === headers.length) {
+        const row = {};
+        headers.forEach((header, idx) => {
+          row[header] = values[idx] || '';
+        });
+        rows.push(row);
+      }
+    }
+    
+    return rows;
+  };
+
+  // Transform CSV row to product format
+  const transformCsvRowToProduct = (row) => {
+    // Normalize column names (handle variations)
+    const getValue = (keys) => {
+      for (const key of keys) {
+        if (row[key] !== undefined && row[key] !== '') return row[key];
+      }
+      return '';
+    };
+
+    const name = getValue(['name', 'product name', 'productname']);
+    const brand = getValue(['brand']);
+    const data = getValue(['data', 'description', 'desc']);
+    const badge = getValue(['badge', 'category', 'cat']);
+    const note = getValue(['note', 'perfume note', 'perfumenote']);
+    const gender = getValue(['gender', 'gend']);
+    const size = getValue(['size']);
+    const price = getValue(['price']);
+    const oldPrice = getValue(['oldprice', 'old price', 'oldprice']);
+    const stock = getValue(['stock', 'quantity', 'qty']);
+    const imageUrls = getValue(['imageurls', 'image urls', 'images', 'image', 'imageurl']);
+    const isOutOfStock = getValue(['isoutofstock', 'out of stock', 'outofstock', 'oos']);
+    const tags = getValue(['tags', 'tag']);
+
+    // Validate required fields
+    if (!name || !brand || !size || !price) {
+      throw new Error(`Missing required fields: name, brand, size, or price`);
+    }
+
+    // Parse images (comma or semicolon separated URLs)
+    const images = imageUrls 
+      ? imageUrls.split(/[,;]/).map(url => url.trim()).filter(url => url.length > 0)
+      : [];
+
+    if (images.length === 0) {
+      throw new Error(`Product "${name}" must have at least one image URL`);
+    }
+
+    // Parse gender
+    let finalGender = 'unisex';
+    if (gender) {
+      const genderLower = gender.toLowerCase();
+      if (genderLower.includes('men') || genderLower === 'm') {
+        finalGender = 'men';
+      } else if (genderLower.includes('women') || genderLower === 'w' || genderLower === 'f') {
+        finalGender = 'women';
+      } else if (genderLower.includes('unisex') || genderLower === 'u') {
+        finalGender = 'unisex';
+      }
+    }
+
+    // Parse tags
+    const parsedTags = tags 
+      ? tags.split(/[,;]/).map(t => t.trim()).filter(t => t.length > 0)
+      : [];
+
+    // Parse stock
+    const numericStock = Number(stock) || 0;
+    // Automatically set isOutOfStock based on stock (0 or less = out of stock)
+    // CSV can still override with isOutOfStock column if needed, but stock takes precedence
+    const isOutOfStockBool = numericStock <= 0 
+      ? true 
+      : (isOutOfStock 
+          ? (isOutOfStock.toLowerCase() === 'true' || isOutOfStock.toLowerCase() === 'yes' || isOutOfStock === '1')
+          : false);
+
+    // Build size object
+    const sizeObj = {
+      size: size,
+      price: price,
+      oldPrice: oldPrice || '',
+      stock: numericStock,
+      images: images.slice(0, 4), // Max 4 images
+      isOutOfStock: isOutOfStockBool
+    };
+
+    return {
+      name: name.trim(),
+      brand: brand.trim(),
+      data: data.trim(),
+      badge: badge.trim() || '',
+      note: note.trim() || '',
+      gender: finalGender,
+      sizes: [sizeObj],
+      tags: parsedTags,
+      isOutOfStock: isOutOfStockBool || (numericStock <= 0)
+    };
+  };
+
+  // Handle CSV file upload
+  const handleCsvFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'text/csv' || file.name.endsWith('.csv')) {
+      setCsvFile(file);
+    } else {
+      alert('Please select a valid CSV file');
+      e.target.value = '';
+    }
+  };
+
+  // Download sample CSV template
+  const downloadSampleCSV = () => {
+    const sampleData = [
+      {
+        name: 'Sample Perfume 1',
+        brand: 'CHANEL',
+        size: '50ml',
+        price: '2999',
+        oldPrice: '3499',
+        imageUrls: 'https://example.com/image1.jpg,https://example.com/image2.jpg',
+        data: 'A luxurious fragrance with notes of jasmine and rose',
+        badge: 'Premium',
+        note: 'Flower',
+        gender: 'women',
+        stock: '50',
+        isOutOfStock: 'false',
+        tags: 'Top Sales,New Arrivals'
+      },
+      {
+        name: 'Sample Perfume 2',
+        brand: 'DIOR',
+        size: '100ml',
+        price: '4999',
+        oldPrice: '',
+        imageUrls: 'https://example.com/image3.jpg',
+        data: 'A fresh and modern scent perfect for everyday wear',
+        badge: 'New',
+        note: 'Citrus',
+        gender: 'unisex',
+        stock: '30',
+        isOutOfStock: 'false',
+        tags: 'Top Ratings'
+      }
+    ];
+
+    const headers = ['name', 'brand', 'size', 'price', 'oldPrice', 'imageUrls', 'data', 'badge', 'note', 'gender', 'stock', 'isOutOfStock', 'tags'];
+    const csvContent = [
+      headers.join(','),
+      ...sampleData.map(row => 
+        headers.map(header => {
+          const value = row[header] || '';
+          // Escape quotes and wrap in quotes if contains comma
+          if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value;
+        }).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'product_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Process and upload CSV products
+  const handleCsvUpload = async () => {
+    if (!csvFile) {
+      alert('Please select a CSV file first');
+      return;
+    }
+
+    setIsCsvUploading(true);
+    setCsvUploadProgress({ current: 0, total: 0, errors: [] });
+
+    try {
+      const text = await csvFile.text();
+      const rows = parseCSV(text);
+      
+      if (rows.length === 0) {
+        throw new Error('No data rows found in CSV file');
+      }
+
+      setCsvUploadProgress({ current: 0, total: rows.length, errors: [] });
+      const errors = [];
+      let successCount = 0;
+
+      // Group products by name+brand (in case CSV has multiple sizes per product)
+      const productMap = new Map();
+
+      for (let i = 0; i < rows.length; i++) {
+        try {
+          const product = transformCsvRowToProduct(rows[i]);
+          const key = `${product.name}_${product.brand}`;
+          
+          if (productMap.has(key)) {
+            // Add size to existing product
+            const existing = productMap.get(key);
+            existing.sizes.push(...product.sizes);
+          } else {
+            productMap.set(key, product);
+          }
+        } catch (error) {
+          errors.push(`Row ${i + 2}: ${error.message}`);
+        }
+      }
+
+      // Upload products
+      const productsToUpload = Array.from(productMap.values());
+      setCsvUploadProgress({ current: 0, total: productsToUpload.length, errors });
+
+      for (let i = 0; i < productsToUpload.length; i++) {
+        try {
+          const product = productsToUpload[i];
+          
+          // Automatically update isOutOfStock based on all sizes
+          // Product is out of stock if all sizes are out of stock (stock <= 0)
+          const allSizesOut = product.sizes.every(sz => sz.isOutOfStock || (Number(sz.stock || 0) <= 0));
+          product.isOutOfStock = allSizesOut;
+
+          await addDoc(collection(db, 'products'), product);
+          successCount++;
+          setCsvUploadProgress(prev => ({ ...prev, current: i + 1 }));
+        } catch (error) {
+          errors.push(`Product "${productsToUpload[i].name}": ${error.message}`);
+        }
+      }
+
+      // Show results
+      const message = `Upload complete!\n\nSuccessfully uploaded: ${successCount} products\nErrors: ${errors.length}`;
+      if (errors.length > 0) {
+        alert(`${message}\n\nErrors:\n${errors.slice(0, 10).join('\n')}${errors.length > 10 ? `\n... and ${errors.length - 10} more` : ''}`);
+      } else {
+        alert(message);
+      }
+
+      // Refresh products list
+      fetchProducts();
+      setCsvFile(null);
+      setShowCsvModal(false);
+      // Reset file input
+      const fileInput = document.getElementById('csv-file-input');
+      if (fileInput) fileInput.value = '';
+    } catch (error) {
+      console.error('CSV upload error:', error);
+      alert(`Failed to process CSV file: ${error.message}`);
+    } finally {
+      setIsCsvUploading(false);
+      setCsvUploadProgress({ current: 0, total: 0, errors: [] });
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchReviews();
     fetchOrders();
-    fetchVideoConfig();
-    fetchBannerConfig();
   }, []);
 
   return (
@@ -630,6 +755,31 @@ const AdminDashboard = () => {
               >
                 <i className="fas fa-plus me-2"></i>
                 Add Product
+              </button>
+              <button 
+                className="btn" 
+                onClick={() => setShowCsvModal(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #2196F3, #1976D2)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '12px 24px',
+                  fontWeight: '600',
+                  boxShadow: '0 8px 25px rgba(33, 150, 243, 0.3)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 12px 35px rgba(33, 150, 243, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 8px 25px rgba(33, 150, 243, 0.3)';
+                }}
+              >
+                <i className="fas fa-file-csv me-2"></i>
+                Upload CSV
               </button>
               <button 
                 className="btn" 
@@ -769,204 +919,6 @@ const AdminDashboard = () => {
               <p style={{ color: '#640d14', fontSize: '14px', margin: 0 }}>In Stock</p>
             </div>
           </div>
-        </div>
-
-        {/* Homepage Videos */}
-        <div className="mt-4" style={{
-          background: '#fff',
-          borderRadius: '20px',
-          padding: '24px 30px',
-          boxShadow: '0 10px 40px rgba(123, 84, 33, 0.08)',
-          border: '1px solid rgba(201, 179, 126, 0.2)'
-        }}>
-          <h3 style={{
-            color: '#3B2F2F',
-            fontSize: '20px',
-            fontWeight: '600',
-            marginBottom: '18px',
-            fontFamily: 'serif'
-          }}>
-            <i className="fas fa-film me-2" style={{ color: '#640d14' }}></i>
-            Homepage Videos
-          </h3>
-          <div className="row g-3">
-            <div className="col-md-6">
-              <label className="form-label" style={{ color: '#3B2F2F', fontWeight: '600', fontSize: 14 }}>
-                Hero Video (top banner)
-              </label>
-              <p style={{ fontSize: 12, color: '#777', marginBottom: 6 }}>
-                {heroVideoUrl ? 'Using custom uploaded video.' : 'No custom video uploaded. Using default video2.mp4.'}
-              </p>
-              <input
-                type="file"
-                accept="video/*"
-                className="form-control"
-                onChange={(e) => handleVideoUpload(e, 'hero')}
-                disabled={isVideoUpdating}
-                style={{ borderRadius: 12, border: '2px solid #E8EBDD', background: '#F8F5F2' }}
-              />
-              <div className="d-flex gap-2 mt-2">
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={() => handleRemoveVideo('hero')}
-                  disabled={isVideoUpdating || !heroVideoUrl}
-                  style={{
-                    background: '#fff',
-                    color: '#D32F2F',
-                    border: '2px solid #D32F2F',
-                    borderRadius: 10,
-                    padding: '6px 12px',
-                    fontWeight: 700
-                  }}
-                >
-                  Remove Hero Video
-                </button>
-              </div>
-              {heroVideoUrl && (
-                <div className="mt-2">
-                  <div style={{ fontSize: 12, color: '#555', wordBreak: 'break-all' }}>
-                    <strong>Current URL:</strong> {heroVideoUrl}
-                  </div>
-                  <video src={heroVideoUrl} controls style={{ width: '100%', borderRadius: 12, marginTop: 8 }} />
-                </div>
-              )}
-            </div>
-            <div className="col-md-6">
-              <label className="form-label" style={{ color: '#3B2F2F', fontWeight: '600', fontSize: 14 }}>
-                Cinematic Stage Video
-              </label>
-              <p style={{ fontSize: 12, color: '#777', marginBottom: 6 }}>
-                {stageVideoUrl ? 'Using custom uploaded video.' : 'No custom video uploaded. Using default video3.mp4.'}
-              </p>
-              <input
-                type="file"
-                accept="video/*"
-                className="form-control"
-                onChange={(e) => handleVideoUpload(e, 'stage')}
-                disabled={isVideoUpdating}
-                style={{ borderRadius: 12, border: '2px solid #E8EBDD', background: '#F8F5F2' }}
-              />
-              <div className="d-flex gap-2 mt-2">
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={() => handleRemoveVideo('stage')}
-                  disabled={isVideoUpdating || !stageVideoUrl}
-                  style={{
-                    background: '#fff',
-                    color: '#D32F2F',
-                    border: '2px solid #D32F2F',
-                    borderRadius: 10,
-                    padding: '6px 12px',
-                    fontWeight: 700
-                  }}
-                >
-                  Remove Stage Video
-                </button>
-              </div>
-              {stageVideoUrl && (
-                <div className="mt-2">
-                  <div style={{ fontSize: 12, color: '#555', wordBreak: 'break-all' }}>
-                    <strong>Current URL:</strong> {stageVideoUrl}
-                  </div>
-                  <video src={stageVideoUrl} controls style={{ width: '100%', borderRadius: 12, marginTop: 8 }} />
-                </div>
-              )}
-            </div>
-          </div>
-          {isVideoUpdating && (
-            <div className="mt-2" style={{ fontSize: 12, color: '#640d14' }}>
-              <i className="fas fa-spinner fa-spin me-1"></i>
-              Uploading video...
-            </div>
-          )}
-          {videoSaveWarning && (
-            <div className="mt-2" style={{ fontSize: 12, color: '#D32F2F', fontWeight: 600 }}>
-              {videoSaveWarning}
-            </div>
-          )}
-        </div>
-
-        {/* Homepage Full Banner */}
-        <div className="mt-4" style={{
-          background: '#fff',
-          borderRadius: '20px',
-          padding: '24px 30px',
-          boxShadow: '0 10px 40px rgba(123, 84, 33, 0.08)',
-          border: '1px solid rgba(201, 179, 126, 0.2)'
-        }}>
-          <h3 style={{
-            color: '#3B2F2F',
-            fontSize: '20px',
-            fontWeight: '600',
-            marginBottom: '18px',
-            fontFamily: 'serif'
-          }}>
-            <i className="fas fa-image me-2" style={{ color: '#640d14' }}></i>
-            Homepage Full Banner
-          </h3>
-
-          <label className="form-label" style={{ color: '#3B2F2F', fontWeight: '600', fontSize: 14 }}>
-            Full Banner Image (shown on Home)
-          </label>
-          <p style={{ fontSize: 12, color: '#777', marginBottom: 6 }}>
-            {fullBannerUrl ? 'Using custom uploaded banner.' : 'No custom banner uploaded. Using default fb.png.'}
-          </p>
-
-          <input
-            type="file"
-            accept="image/*"
-            className="form-control"
-            onChange={handleBannerUpload}
-            disabled={isBannerUpdating}
-            style={{ borderRadius: 12, border: '2px solid #E8EBDD', background: '#F8F5F2' }}
-          />
-
-          <div className="d-flex gap-2 mt-2">
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={handleRemoveBanner}
-              disabled={isBannerUpdating || !fullBannerUrl}
-              style={{
-                background: '#fff',
-                color: '#D32F2F',
-                border: '2px solid #D32F2F',
-                borderRadius: 10,
-                padding: '6px 12px',
-                fontWeight: 700
-              }}
-            >
-              Remove Banner
-            </button>
-          </div>
-
-          {isBannerUpdating && (
-            <div className="mt-2" style={{ fontSize: 12, color: '#640d14' }}>
-              <i className="fas fa-spinner fa-spin me-1"></i>
-              Uploading banner...
-            </div>
-          )}
-
-          {bannerSaveWarning && (
-            <div className="mt-2" style={{ fontSize: 12, color: '#D32F2F', fontWeight: 600 }}>
-              {bannerSaveWarning}
-            </div>
-          )}
-
-          {fullBannerUrl && (
-            <div className="mt-2">
-              <div style={{ fontSize: 12, color: '#555', wordBreak: 'break-all' }}>
-                <strong>Current URL:</strong> {fullBannerUrl}
-              </div>
-              <img
-                src={fullBannerUrl}
-                alt="Full banner preview"
-                style={{ width: '100%', borderRadius: 12, marginTop: 8, border: '1px solid #E8EBDD' }}
-              />
-            </div>
-          )}
         </div>
 
         {/* Products Table */}
@@ -1281,12 +1233,13 @@ const AdminDashboard = () => {
                     <th style={{ border: 'none', padding: '12px', fontSize: 14, color: '#3B2F2F' }}>Total</th>
                     <th style={{ border: 'none', padding: '12px', fontSize: 14, color: '#3B2F2F' }}>Status</th>
                     <th style={{ border: 'none', padding: '12px', fontSize: 14, color: '#3B2F2F' }}>Payment ID</th>
+                    <th style={{ border: 'none', padding: '12px', fontSize: 14, color: '#3B2F2F' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-4" style={{ color: '#640d14' }}>
+                      <td colSpan="7" className="text-center py-4" style={{ color: '#640d14' }}>
                         No orders yet
                       </td>
                     </tr>
@@ -1310,6 +1263,16 @@ const AdminDashboard = () => {
                             </span>
                           </td>
                           <td style={{ padding: '12px', color: '#3B2F2F' }}>{o.paymentId || '-'}</td>
+                          <td style={{ padding: '12px' }}>
+                            <button
+                              className="btn btn-sm"
+                              onClick={() => handleDeleteOrder(o.id)}
+                              style={{ background: '#fff', color: '#D32F2F', border: '2px solid #D32F2F', borderRadius: '8px', padding: '6px 12px', fontSize: '12px' }}
+                            >
+                              <i className="fas fa-trash me-1"></i>
+                              Delete
+                            </button>
+                          </td>
                         </tr>
                       );
                     })
@@ -1432,6 +1395,219 @@ const AdminDashboard = () => {
                   fetchProducts();
                   setShowUploadModal(false);
                 }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSV Upload Modal */}
+      {showCsvModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ 
+          background: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 1050
+        }}>
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content" style={{
+              borderRadius: '24px',
+              border: '1px solid #e0d6c3',
+              boxShadow: '0 16px 48px rgba(123, 84, 33, 0.18)',
+              background: 'linear-gradient(135deg, #fff 80%, #f8f5f2 100%)',
+              overflow: 'hidden'
+            }}>
+              <div className="modal-header" style={{
+                borderBottom: '1px solid #f3ede2',
+                padding: '32px 36px',
+                background: 'linear-gradient(90deg, #f8f5f2 60%, #efe8dc 100%)'
+              }}>
+                <h4 className="modal-title" style={{
+                  color: '#3B2F2F',
+                  fontWeight: '700',
+                  fontSize: '22px',
+                  letterSpacing: '0.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <i className="fas fa-file-csv" style={{ color: '#2196F3', fontSize: 22 }}></i>
+                  Upload Products from CSV
+                </h4>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => {
+                    setShowCsvModal(false);
+                    setCsvFile(null);
+                    const fileInput = document.getElementById('csv-file-input');
+                    if (fileInput) fileInput.value = '';
+                  }}
+                  style={{ fontSize: '20px', outline: 'none' }}
+                />
+              </div>
+              <div className="modal-body" style={{ padding: '36px 36px 24px 36px', background: '#fff' }}>
+                <div className="mb-4">
+                  <label className="form-label" style={{ color: '#3B2F2F', fontWeight: '600', fontSize: 15, marginBottom: '12px' }}>
+                    <i className="fas fa-file me-2" style={{ color: '#2196F3' }}></i>
+                    Select CSV File
+                  </label>
+                  <input
+                    id="csv-file-input"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleCsvFileChange}
+                    className="form-control"
+                    style={{
+                      border: '2px solid #E8EBDD',
+                      borderRadius: '14px',
+                      padding: '15px 18px',
+                      fontSize: '16px',
+                      background: '#F8F5F2',
+                      boxShadow: '0 2px 8px rgba(123, 84, 33, 0.04)'
+                    }}
+                  />
+                  {csvFile && (
+                    <div className="mt-2" style={{ color: '#4CAF50', fontSize: '14px' }}>
+                      <i className="fas fa-check-circle me-2"></i>
+                      Selected: {csvFile.name}
+                    </div>
+                  )}
+                </div>
+
+                {/* CSV Format Guide */}
+                <div style={{
+                  background: '#F8F5F2',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px',
+                  border: '1px solid #E8EBDD'
+                }}>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6 style={{ color: '#3B2F2F', fontWeight: '600', margin: 0 }}>
+                      <i className="fas fa-info-circle me-2" style={{ color: '#2196F3' }}></i>
+                      CSV Format Guide
+                    </h6>
+                    <button
+                      type="button"
+                      onClick={downloadSampleCSV}
+                      className="btn btn-sm"
+                      style={{
+                        background: 'linear-gradient(135deg, #2196F3, #1976D2)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <i className="fas fa-download me-1"></i>
+                      Download Template
+                    </button>
+                  </div>
+                  <p style={{ color: '#640d14', fontSize: '13px', marginBottom: '10px', fontWeight: '600' }}>
+                    Required columns: name, brand, size, price, imageUrls
+                  </p>
+                  <p style={{ color: '#3B2F2F', fontSize: '12px', marginBottom: '8px' }}>
+                    <strong>Optional columns:</strong> data (description), badge (category), note (perfume note), gender, oldPrice, stock, isOutOfStock, tags
+                  </p>
+                  <p style={{ color: '#3B2F2F', fontSize: '12px', marginBottom: '8px' }}>
+                    <strong>Image URLs:</strong> Comma or semicolon separated (e.g., "url1,url2,url3")
+                  </p>
+                  <p style={{ color: '#3B2F2F', fontSize: '12px', marginBottom: '8px' }}>
+                    <strong>Tags:</strong> Comma or semicolon separated (e.g., "Top Sales,New Arrivals")
+                  </p>
+                  <p style={{ color: '#3B2F2F', fontSize: '12px' }}>
+                    <strong>Note:</strong> Multiple sizes for the same product (same name+brand) will be grouped automatically
+                  </p>
+                </div>
+
+                {/* Progress Indicator */}
+                {isCsvUploading && csvUploadProgress.total > 0 && (
+                  <div className="mb-3">
+                    <div className="d-flex justify-content-between mb-2">
+                      <span style={{ color: '#3B2F2F', fontSize: '14px', fontWeight: '600' }}>
+                        Uploading products...
+                      </span>
+                      <span style={{ color: '#640d14', fontSize: '14px', fontWeight: '600' }}>
+                        {csvUploadProgress.current} / {csvUploadProgress.total}
+                      </span>
+                    </div>
+                    <div className="progress" style={{ height: '24px', borderRadius: '12px', overflow: 'hidden' }}>
+                      <div 
+                        className="progress-bar" 
+                        role="progressbar"
+                        style={{
+                          width: `${(csvUploadProgress.current / csvUploadProgress.total) * 100}%`,
+                          background: 'linear-gradient(135deg, #2196F3, #1976D2)',
+                          transition: 'width 0.3s ease'
+                        }}
+                      >
+                        {Math.round((csvUploadProgress.current / csvUploadProgress.total) * 100)}%
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer" style={{
+                borderTop: '1px solid #f3ede2',
+                padding: '28px 36px',
+                background: '#f8f5f2'
+              }}>
+                <button 
+                  className="btn" 
+                  onClick={() => {
+                    setShowCsvModal(false);
+                    setCsvFile(null);
+                    const fileInput = document.getElementById('csv-file-input');
+                    if (fileInput) fileInput.value = '';
+                  }}
+                  disabled={isCsvUploading}
+                  style={{
+                    background: '#fff',
+                    color: '#640d14',
+                    border: '2px solid #640d14',
+                    borderRadius: '14px',
+                    padding: '12px 28px',
+                    fontWeight: '700',
+                    fontSize: '16px',
+                    marginRight: '10px',
+                    boxShadow: '0 2px 8px rgba(123, 84, 33, 0.04)',
+                    opacity: isCsvUploading ? 0.6 : 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn" 
+                  onClick={handleCsvUpload}
+                  disabled={isCsvUploading || !csvFile}
+                  style={{
+                    background: isCsvUploading || !csvFile 
+                      ? '#C9B37E' 
+                      : 'linear-gradient(135deg, #2196F3, #1976D2)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '14px',
+                    padding: '12px 28px',
+                    fontWeight: '700',
+                    fontSize: '16px',
+                    boxShadow: '0 4px 16px rgba(33, 150, 243, 0.10)',
+                    cursor: isCsvUploading || !csvFile ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isCsvUploading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin me-2"></i>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-upload me-2"></i>
+                      Upload CSV
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -1654,18 +1830,18 @@ const AdminDashboard = () => {
                                 />
                               </div>
                               <div className="col-md-2 d-flex align-items-center">
-                                <div className="form-check mt-3">
-                                  <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    id={`edit-size-oos-${idx}`}
-                                    checked={!!sz.isOutOfStock}
-                                    onChange={e => handleSizeChange(idx, 'isOutOfStock', e.target.checked)}
-                                    style={{ transform: 'scale(1.1)' }}
-                                  />
-                                  <label className="form-check-label ms-2" htmlFor={`edit-size-oos-${idx}`} style={{ color: '#3B2F2F', fontSize: '13px', fontWeight: 500 }}>
-                                    Out of Stock
-                                  </label>
+                                <div className="mt-3" style={{ fontSize: '13px', fontWeight: 500 }}>
+                                  {Number(sz.stock || 0) <= 0 ? (
+                                    <span style={{ color: '#D32F2F' }}>
+                                      <i className="fas fa-exclamation-triangle me-1"></i>
+                                      Out of Stock
+                                    </span>
+                                  ) : (
+                                    <span style={{ color: '#4CAF50' }}>
+                                      <i className="fas fa-check-circle me-1"></i>
+                                      In Stock
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               <div className="col-12 col-md-9">
@@ -1745,23 +1921,6 @@ const AdminDashboard = () => {
                           Initialize Sizes
                         </button>
                       )}
-                    </div>
-                    {/* Stock Status */}
-                    <div className="col-md-4 d-flex align-items-center">
-                      <div className="form-check mt-4">
-                        <input 
-                          className="form-check-input" 
-                          type="checkbox" 
-                          name="isOutOfStock" 
-                          checked={formData.isOutOfStock} 
-                          onChange={handleFormChange}
-                          style={{ transform: 'scale(1.2)' }}
-                        />
-                        <label className="form-check-label" style={{ color: '#3B2F2F', fontWeight: '600', fontSize: 15 }}>
-                          <i className="fas fa-exclamation-triangle me-2" style={{ color: '#D32F2F' }}></i>
-                          Out of Stock
-                        </label>
-                      </div>
                     </div>
                     {/* Gender */}
                     <div className="col-md-8 d-flex align-items-center">

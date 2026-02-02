@@ -1,0 +1,129 @@
+:root {
+    --ex-gold: #9b7645;
+    --ex-maroon: #640d14;
+    --ex-bg: #eae6dd;
+  }
+  
+  .size-section {
+    padding: 40px 0;
+    background-color: #fff;
+  }
+  
+  .size-card {
+    display: block;
+    text-decoration: none;
+    position: relative;
+    group: hover;
+  }
+  
+  /* --- Framed Image Effect --- */
+  .size-image-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1.2;
+    background: #f9f8f6;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .size-frame {
+    position: absolute;
+    inset: 15px;
+    border: 1px solid rgba(155, 118, 69, 0.3);
+    z-index: 2;
+    transition: all 0.5s ease;
+  }
+  
+  .size-img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+    transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+  
+  /* --- Floating Size Tag --- */
+  .size-tag {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: var(--ex-maroon);
+    color: white;
+    font-size: 0.7rem;
+    padding: 8px 15px;
+    letter-spacing: 1px;
+    z-index: 3;
+  }
+  
+  /* --- Hover States --- */
+  .size-card:hover .size-frame {
+    inset: 0;
+    border-color: var(--ex-gold);
+  }
+  
+  .size-card:hover .size-img {
+    transform: scale(1.05) translateY(-5px);
+  }
+  
+  /* --- Content Styling --- */
+  .size-content {
+    padding-top: 25px;
+    text-align: left; /* Different from the centered Collection style */
+  }
+  
+  .size-sub {
+    display: block;
+    color: var(--ex-gold);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+  
+  .size-title {
+    font-size: 1.4rem;
+    color: #222;
+    font-family: serif; /* Gives it a more "magazine" feel */
+    margin: 0 0 10px 0;
+  }
+  
+  .size-explore {
+    font-size: 0.75rem;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    display: inline-block;
+    transition: color 0.3s;
+  }
+  
+  .size-explore::after {
+    content: '';
+    position: absolute;
+    width: 0%;
+    height: 1px;
+    bottom: -2px;
+    left: 0;
+    background: var(--ex-maroon);
+    transition: width 0.3s ease;
+  }
+  
+  .size-card:hover .size-explore {
+    color: var(--ex-maroon);
+  }
+  
+  .size-card:hover .size-explore::after {
+    width: 100%;
+  }
+  
+  /* --- Swiper Dots --- */
+  .size-swiper {
+    padding-bottom: 60px !important;
+  }
+  
+  @media (max-width: 768px) {
+    .size-title { font-size: 1.1rem; }
+    .size-image-wrapper { aspect-ratio: 1/1; }
+  }

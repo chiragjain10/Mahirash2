@@ -223,6 +223,29 @@ function BannerFresh({ onQuickView }) {
     return isNaN(num) ? '0.00' : num.toFixed(2);
   }
 
+  // Helper function to get category icon and color
+  const getCategoryInfo = (badge) => {
+    if (!badge) return { icon: 'fa-tag', color: '#fff', bg: 'linear-gradient(135deg, #640d14, #9b7645)' };
+    
+    const badgeLower = badge.toLowerCase();
+    switch (badgeLower) {
+      case 'new':
+        return { icon: 'fa-star', color: '#fff', bg: 'linear-gradient(135deg, #3FC53A, #4CAF50)' };
+      case 'premium':
+        return { icon: 'fa-crown', color: '#fff', bg: 'linear-gradient(135deg, #C9B37E, #D4B04C)' };
+      case 'budget':
+        return { icon: 'fa-tags', color: '#fff', bg: 'linear-gradient(135deg, #2196F3, #1976D2)' };
+      case 'clearence':
+        return { icon: 'fa-fire', color: '#fff', bg: 'linear-gradient(135deg, #FF6B35, #F7931E)' };
+      case 'special edition':
+        return { icon: 'fa-gem', color: '#fff', bg: 'linear-gradient(135deg, #A63A27, #D32F2F)' };
+      case 'sale':
+        return { icon: 'fa-percent', color: '#fff', bg: 'linear-gradient(135deg, #E91E63, #C2185B)' };
+      default:
+        return { icon: 'fa-tag', color: '#fff', bg: 'linear-gradient(135deg, #640d14, #9b7645)' };
+    }
+  };
+
   if (loading) {
     return <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 200 }}><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>;
   }
@@ -319,11 +342,31 @@ function BannerFresh({ onQuickView }) {
                     >
                       <img src={getPrimaryImage(product)} alt={product.name} className="product-image" />
                       <img src={getPrimaryImage(product)} alt={product.name} className="product-hover-image" />
-                      {product.badge && (
-                        <div className="product-badge">
-                          {product.badge}
-                        </div>
-                      )}
+                      {product.badge && (() => {
+                        const categoryInfo = getCategoryInfo(product.badge);
+                        return (
+                          <div 
+                            className="product-badge"
+                            style={{
+                              background: categoryInfo.bg,
+                              color: categoryInfo.color,
+                              fontWeight: 700,
+                              fontSize: '0.75rem',
+                              padding: '6px 14px',
+                              borderRadius: '20px',
+                              boxShadow: '0 4px 15px rgba(127, 89, 40, 0.3)',
+                              letterSpacing: '0.5px',
+                              textTransform: 'uppercase',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <i className={`fas ${categoryInfo.icon}`} style={{ fontSize: '0.7rem' }}></i>
+                            <span>{product.badge}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {!product.isOutOfStock && (

@@ -8,10 +8,12 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,6 +67,27 @@ const Login = () => {
         setError('Unable to sign in with Google right now. Please try again.');
       }
       setGoogleLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    const emailToReset = resetEmail || email;
+    if (!emailToReset) {
+      setError('Please enter your email address');
+      return;
+    }
+    setError('');
+    setResetSuccess('');
+    try {
+      await resetPassword(emailToReset);
+      setResetSuccess('Password reset email sent! Check your inbox.');
+      setResetEmail('');
+    } catch (err) {
+      if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email address');
+      } else {
+        setError('Failed to send reset email. Please try again.');
+      }
     }
   };
 
@@ -246,6 +269,42 @@ const Login = () => {
               placeholder="Enter your password"
             />
           </div>
+
+          <div style={{ marginBottom: '16px', textAlign: 'right' }}>
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#C9B37E',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = '#3B2F2F'}
+              onMouseLeave={(e) => e.target.style.color = '#C9B37E'}
+            >
+              Forgot Password?
+            </button>
+          </div>
+
+          {resetSuccess && (
+            <div style={{
+              background: 'rgba(40, 167, 69, 0.1)',
+              border: '1px solid rgba(40, 167, 69, 0.3)',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '24px',
+              color: '#28a745',
+              fontSize: '14px',
+              textAlign: 'center'
+            }}>
+              {resetSuccess}
+            </div>
+          )}
 
           <button
             type="submit"

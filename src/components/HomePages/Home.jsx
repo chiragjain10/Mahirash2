@@ -10,6 +10,7 @@ import BannerFresh from "./BannerFresh";
 import Collection2 from "./Collection2";
 import QuickView from "../QuickView";
 import VideoBnr from "./VIdeoBnr.jsx";
+import SizeGallery from "./Size.jsx";
 
 // Lazy load heavy components
 const Testimonials = lazy(() => import("./Testimonials"));
@@ -59,6 +60,7 @@ function Home() {
             </Suspense>
             <Collections />
             <BannerImg />
+            <SizeGallery/>
             <BannerFresh onQuickView={handleQuickView} />
             <Collection2 />
             <Suspense fallback={<div className="loading-placeholder" style={{height: '300px', background: '#f5f5f5'}}></div>}>
